@@ -1,7 +1,7 @@
 // import '../css/style.scss';
 import { lerp } from './utils';
+import { Controls } from './controls';
 import * as THREE from "three";
-// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
 // import { VivianiCurve } from "three/examples/jsm/curves/CurveExtras.js"
 import Lenis from '@studio-freight/lenis';
 import { gsap } from "gsap";
@@ -33,7 +33,8 @@ class Main {
     this.loader = new THREE.TextureLoader();
     this.texture = null;
 
-    this.controls = null;
+
+    this.isEnableControls = false; // OrbitControls有効化
 
     this.lenis = new Lenis({
       lerp: 0.04, // 慣性の強さ
@@ -67,7 +68,9 @@ class Main {
     this.texture = await this._loadTexture('images/img15.png');
 
     this._setCamera();
-    // this._setControlls();
+
+    this._setControlls();
+
     this._setLight();
     this._setCurve();
     this._setScroll();
@@ -92,10 +95,11 @@ class Main {
     this.scene.add(this.camera);
   }
 
-  // _setControlls() {
-  //   this.controls = new OrbitControls(this.camera, this.canvas);
-  //   this.controls.enableDamping = true;
-  // }
+  _setControlls() {
+    if(this.isEnableControls) {
+      this.controls = new Controls(this.camera, this.canvas);
+    }
+  }
 
   _setLight() {
     const light = new THREE.DirectionalLight(0xffffff, 1.5);
@@ -128,8 +132,8 @@ class Main {
     });
     material.map.wrapS = THREE.RepeatWrapping;
     material.map.wrapT = THREE.RepeatWrapping;
-    // material.map.repeat.set(90, 3);
-    material.map.repeat.set(1, 200);
+    // material.map.repeat.set(1, 200);
+    material.map.repeat.set(1, 3);
 
     this.mesh = new THREE.Mesh(geometry, material);
     this.scene.add(this.mesh);
@@ -148,8 +152,6 @@ class Main {
         onUpdate: (self) => {
           // this._updateCamera();
           const progress = self.progress;
-
-          // console.log("progress:", progress);
 
           if(progress > 0.96) return;
           
@@ -193,7 +195,11 @@ class Main {
     //   this.renderer.render(this.scene, this.camera);
     //   this.isInitialRender = false;
     // }
-    // this.controls.update();
+
+    if(this.isEnableControls) {
+      this.controls.update();
+    }
+
     requestAnimationFrame(this._update.bind(this));
   }
 
