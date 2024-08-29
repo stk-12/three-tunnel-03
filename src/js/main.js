@@ -1,5 +1,5 @@
 // import '../css/style.scss';
-import { lerp } from './utils';
+import { random, lerp } from './utils';
 import { Controls } from './controls';
 import * as THREE from "three";
 // import { VivianiCurve } from "three/examples/jsm/curves/CurveExtras.js"
@@ -26,15 +26,22 @@ class Main {
     this.renderer.setSize(this.viewport.width, this.viewport.height);
 
     this.scene = new THREE.Scene();
+    this.group = new THREE.Group();
+    this.scene.add(this.group);
 
     this.camera = null;
+
     this.mesh = null;
+
+    this.meshParticle = null;
+    this.particleCount = 200;
 
     this.loader = new THREE.TextureLoader();
     this.texture = null;
 
 
     this.isEnableControls = false; // OrbitControls有効化
+    // this.isEnableControls = true; // OrbitControls有効化
 
     this.lenis = new Lenis({
       lerp: 0.04, // 慣性の強さ
@@ -76,6 +83,8 @@ class Main {
     this._setScroll();
     
     this._addMesh();
+    this._addParticle();
+
     this._update();
     this._addEvent();
   }
@@ -103,8 +112,11 @@ class Main {
 
   _setLight() {
     const light = new THREE.DirectionalLight(0xffffff, 1.5);
-    light.position.set(1, 1, 1);
+    light.position.set(1, 30, 1);
     this.scene.add(light);
+
+    const lightAmb = new THREE.AmbientLight(0xffffff, 0.5);
+    this.scene.add(lightAmb);
   }
 
   _setCurve() {
@@ -139,7 +151,37 @@ class Main {
     this.scene.add(this.mesh);
   }
 
+  _addParticle() {
+    const geometryBox = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+    const geometrySIcosahedron = new THREE.IcosahedronGeometry(0.3, 0);
+    const geometryTorus = new THREE.TorusGeometry( 0.3, 0.1, 16, 100);
+
+    for(let i = 0; i < this.particleCount; i++) {
+      
+      // const geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+      const material = new THREE.MeshStandardMaterial({
+        color: 0xeeeeee,
+      });
+      const randomGeo = random(0,1);
+      let mesh;
+      if(randomGeo < 0.2) {
+        mesh = new THREE.Mesh(geometryTorus, material);
+      } else if(randomGeo < 0.7) {
+        mesh = new THREE.Mesh(geometrySIcosahedron, material);
+      } else {
+        mesh = new THREE.Mesh(geometryBox, material);
+      }
+      const random1 = random(-4, 4);
+      const random2 = random(-4, 4);
   
+      const position = this.curveLine.getPoint(Math.random());
+      // mesh.position.set(position.x, position.y, position.z);
+      mesh.position.set(position.x + random1, position.y + random2, position.z);
+      mesh.rotation.set(Math.random(),Math.random(),Math.random());
+  
+      this.group.add(mesh);
+    }
+  }
 
   _setScroll() {
     const tl = gsap.timeline({
@@ -174,6 +216,11 @@ class Main {
 
   _update(time) {
     this.lenis.raf(time);
+
+    for(let i = 0; i < this.particleCount; i++) {
+      this.group.children[i].rotation.x += 0.01;
+      this.group.children[i].rotation.y += 0.005;
+    }
 
     // this.percentage += 0.001;
 
